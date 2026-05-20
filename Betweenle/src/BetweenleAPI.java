@@ -8,7 +8,7 @@ public class BetweenleAPI {
     private List<String> palabrasFiltradas;
     private HashSet<Character> letrasUsadas;
     private String palabraSecreta;
-
+    private String rutaActual;
     private String palabraTop;
     private String palabraBottom;
     private int intentosRestantes;
@@ -27,6 +27,7 @@ public class BetweenleAPI {
 
     // carga el diccionario con formato "palabra; longitud"
     public void cargarDiccionario(String ruta) throws IOException {
+        this.rutaActual = ruta;
         File archivo = new File(ruta);
         Scanner lector = new Scanner(archivo);
 
@@ -37,12 +38,12 @@ public class BetweenleAPI {
                 // Separamos la línea usando el punto y coma como delimitador
                 String[] partes = linea.split(";");
 
-                // Verificamos que la línea tenga al menos la palabra y la longitud
+                // Verificamos que la línea tenga al menos la palabra y la definición
                 if (partes.length >= 2) {
                     String palabra = partes[0].trim().toLowerCase();
                     String longitud = partes[1].trim();
 
-                    // HashMap: La clave es la palabra, el valor es su longitud
+                    // HashMap: La clave es la palabra, el valor es su definición real
                     diccionario.put(palabra, longitud);
                 } else if (partes.length == 1) {
                     // Por si alguna línea viene rota y solo trae la palabra
@@ -54,9 +55,9 @@ public class BetweenleAPI {
         lector.close();
     }
 
-    // Te permite consultar la longitud de cualquier palabra
-    public String obtenerLongitud(String palabra) {
-        return diccionario.getOrDefault(palabra.toLowerCase(), "Longitud no encontrada.");
+    // Te permite consultar la definición de cualquier palabra
+    public String obtenerDefinicion(String palabra) {
+        return diccionario.getOrDefault(palabra.toLowerCase(), "Definición no encontrada.");
     }
 
     public void iniciarJuego(int longitud, int intentos) {
@@ -160,11 +161,40 @@ public class BetweenleAPI {
         palabraBottom = palabrasFiltradas.get(nuevoIdx);
         return "El [Bottom Limit] se ha recorrido un 1% alfabéticamente a: " + palabraBottom.toUpperCase();
     }
+    //agregamos la palabra al diccionario
+    public void agregarPalabra(String p, String l) {
+        String palabraLimpia = p.toLowerCase();
+
+        diccionario.put(palabraLimpia, l);
+
+        if (palabrasFiltradas != null && palabraSecreta != null && palabraLimpia.length() == palabraSecreta.length()) {
+            if (!palabrasFiltradas.contains(palabraLimpia)) {
+                palabrasFiltradas.add(palabraLimpia);
+                palabrasFiltradas.sort((p1, p2) -> quitarAcentos(p1).compareTo(quitarAcentos(p2)));
+            }
+        }
+
+        if (rutaActual != null) {
+            try {
+                List<String> todasLasPalabras = new ArrayList<>(diccionario.keySet());
+                todasLasPalabras.sort((p1, p2) -> quitarAcentos(p1).compareTo(quitarAcentos(p2)));
+
+                try (FileWriter fw = new FileWriter(rutaActual, false);
+                     BufferedWriter bw = new BufferedWriter(fw);
+                     PrintWriter out = new PrintWriter(bw)) {
+
+                    for (String palabra : todasLasPalabras) {
+                        out.println(palabra + ";" + diccionario.get(palabra));
+                    }
+                }
+            } catch (IOException e) {
+                System.out.println("Error al guardar en el archivo: " + e.getMessage());
+            }
+        }
+    }
 
     public boolean esValida(String p) {
         return diccionario.containsKey(p.toLowerCase()); }
-    public void agregarPalabra(String p, String l) {
-        diccionario.put(p.toLowerCase(), l); }
     public int getIntentos() {
         return intentosRestantes; }
     public HashSet<Character> getLetrasUsadas() {
