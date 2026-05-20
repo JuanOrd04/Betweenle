@@ -130,28 +130,32 @@ public class BetweenleAPI {
     }
 
     //conseguimos que recorra la palabra un porciento
-    public String darPistaTop1Porciento() {
+   public String darPistaTop1Porciento() {
         int idxSecreta = palabrasFiltradas.indexOf(palabraSecreta);
         int idxActual = (palabraTop == null) ? 0 : palabrasFiltradas.indexOf(palabraTop);
         int unoPorciento = Math.max(1, palabrasFiltradas.size() / 100);
+
+        // Validar si la distancia actual es menor o igual al 1%
+        if ((idxSecreta - idxActual) <= unoPorciento) {
+            return "La distancia al límite superior ya es del 1% o menor. Estás demasiado cerca.";
+        }
+
         int nuevoIdx = idxActual + unoPorciento;
-
-        if (nuevoIdx >= idxSecreta) nuevoIdx = idxSecreta - 1;
-        if (nuevoIdx <= idxActual) return "Ya estás demasiado cerca.";
-
         palabraTop = palabrasFiltradas.get(nuevoIdx);
         return "El [Top Limit] se ha recorrido un 1% alfabéticamente a: " + palabraTop.toUpperCase();
     }
-    // conseguimos que recorra la palabra 1%
+
     public String darPistaBottom1Porciento() {
         int idxSecreta = palabrasFiltradas.indexOf(palabraSecreta);
         int idxActual = (palabraBottom == null) ? palabrasFiltradas.size() - 1 : palabrasFiltradas.indexOf(palabraBottom);
         int unoPorciento = Math.max(1, palabrasFiltradas.size() / 100);
+
+        // Validar si la distancia actual es menor o igual al 1%
+        if ((idxActual - idxSecreta) <= unoPorciento) {
+            return "La distancia al límite inferior ya es del 1% o menor. Estás demasiado cerca.";
+        }
+
         int nuevoIdx = idxActual - unoPorciento;
-
-        if (nuevoIdx <= idxSecreta) nuevoIdx = idxSecreta + 1;
-        if (nuevoIdx >= idxActual) return "Ya estás demasiado cerca.";
-
         palabraBottom = palabrasFiltradas.get(nuevoIdx);
         return "El [Bottom Limit] se ha recorrido un 1% alfabéticamente a: " + palabraBottom.toUpperCase();
     }
