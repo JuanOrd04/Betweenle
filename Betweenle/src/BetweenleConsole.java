@@ -32,7 +32,7 @@ public class BetweenleConsole {
 
             if (idioma == 1) {
                 System.out.println("¡Diccionario cargado automáticamente!\n");
-            } 
+            }
             System.out.println("--- JUEGO BETWEENLE ---");
 
             int len = 0;
@@ -103,12 +103,20 @@ public class BetweenleConsole {
 
                     switch (opcionPista) {
                         case "a":
-                            System.out.println("-> " + juego.darPistaTop1Porciento());
-                            pistaUsada = true; 
+                            if (juego.getPalabraTop() == null) {
+                                System.out.println("-> Aún no tienes un [Top Limit]. Ingresa palabras para crear un límite superior primero.");
+                            } else {
+                                System.out.println("-> " + juego.darPistaTop1Porciento());
+                                pistaUsada = true;
+                            }
                             break;
                         case "b":
-                            System.out.println("-> " + juego.darPistaBottom1Porciento());
-                            pistaUsada = true; 
+                            if (juego.getPalabraBottom() == null) {
+                                System.out.println("-> Aún no tienes un [Bottom Limit]. Ingresa palabras para crear un límite inferior primero.");
+                            } else {
+                                System.out.println("-> " + juego.darPistaBottom1Porciento());
+                                pistaUsada = true; 
+                            }
                             break;
                         case "c":
                             System.out.println("-> " + juego.obtenerPistaComienzo());
