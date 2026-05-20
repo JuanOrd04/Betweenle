@@ -8,10 +8,9 @@ public class BetweenleConsole {
         try {
             System.out.println("--- BIENVENIDO A BETWEENLE ---");
 
-            // Menú de selección de idioma
             int idioma = 0;
             while (idioma != 1 && idioma != 2) {
-                System.out.println("Selecciona el idioma:");
+                System.out.println("Selecciona el idioma");
                 System.out.println("1) Español");
                 System.out.println("2) English");
 
@@ -25,18 +24,15 @@ public class BetweenleConsole {
                     sc.next();
                 }
             }
-            // Limpiar el buffer después de leer el número
             sc.nextLine();
 
-            // Asignar la ruta dependiendo de la elección ya sea espanol o ingles
             String rutaDiccionario = (idioma == 1) ? "palabrasSpanol.txt" : "palabrasIngles.txt";
 
             juego.cargarDiccionario(rutaDiccionario);
 
             if (idioma == 1) {
                 System.out.println("¡Diccionario cargado automáticamente!\n");
-            }
-
+            } 
             System.out.println("--- JUEGO BETWEENLE ---");
 
             int len = 0;
@@ -51,11 +47,25 @@ public class BetweenleConsole {
                 }
             }
 
-            System.out.print("Oportunidades (10, 12, 14): ");
-            int tries = sc.nextInt();
+            int tries = 0;
+            while (tries != 10 && tries != 12 && tries != 14) {
+                System.out.print("Oportunidades (10, 12, 14): ");
+                if (sc.hasNextInt()) {
+                    tries = sc.nextInt();
+                    if (tries != 10 && tries != 12 && tries != 14) {
+                        System.out.println("Opción no válida. Por favor, elige 10, 12 o 14.");
+                    }
+                } else {
+                    System.out.println("Entrada no válida. Por favor, introduce un número (10, 12 o 14).");
+                    sc.next();
+                }
+            }
             sc.nextLine();
 
             juego.iniciarJuego(len, tries);
+
+            // Variable para controlar si ya se usó la pista en esta partida
+            boolean pistaUsada = false;
 
             while (juego.getIntentos() > 0) {
                 String txtTop = (juego.getPalabraTop() == null) ? "----" : juego.getPalabraTop().toUpperCase();
@@ -65,9 +75,9 @@ public class BetweenleConsole {
                 String pctBottom = (juego.getPorcentajeBottom() == -1) ? "?" : String.format("%.2f%%", juego.getPorcentajeBottom());
 
                 System.out.println("\n=============================================");
-                System.out.printf(" [Top Limit]    →   %s (Distancia: %s)\n", txtTop, pctTop);
-                System.out.println("                   [ Palabra Secreta Oculta ]");
-                System.out.printf(" [Bottom Limit] →   %s (Distancia: %s)\n", txtBottom, pctBottom);
+                System.out.printf(" [Top Limit]   ↳  %s (Distancia: %s)\n", txtTop, pctTop);
+                System.out.println("      ??       [ Palabra Secreta Oculta ]");
+                System.out.printf(" [Bottom Limit]↳  %s (Distancia: %s)\n", txtBottom, pctBottom);
                 System.out.println("=============================================");
 
                 System.out.println("Intentos restantes: " + juego.getIntentos());
@@ -76,6 +86,13 @@ public class BetweenleConsole {
                 String input = sc.nextLine().toLowerCase();
 
                 if (input.equals("pista") || input.equals("hint")) {
+
+                    // Verificamos si ya la usó antes de mostrar el menú
+                    if (pistaUsada) {
+                        System.out.println("-> ¡Ya utilizaste tu única pista en este juego!");
+                        continue;
+                    }
+
                     System.out.println("\n--- MENÚ DE PISTAS ---");
                     System.out.println("a) Recorrer un 1% la palabra de arriba (Top Limit)");
                     System.out.println("b) Recorrer un 1% la palabra de abajo (Bottom Limit)");
@@ -87,12 +104,15 @@ public class BetweenleConsole {
                     switch (opcionPista) {
                         case "a":
                             System.out.println("-> " + juego.darPistaTop1Porciento());
+                            pistaUsada = true; 
                             break;
                         case "b":
                             System.out.println("-> " + juego.darPistaBottom1Porciento());
+                            pistaUsada = true; 
                             break;
                         case "c":
                             System.out.println("-> " + juego.obtenerPistaComienzo());
+                            pistaUsada = true; 
                             break;
                         default:
                             System.out.println("-> Opción no válida. Menú de pistas cancelado.");
@@ -104,7 +124,7 @@ public class BetweenleConsole {
                 if (!juego.esValida(input)) {
                     System.out.print("No existe en el diccionario. ¿Es real? (s/n): ");
                     if (sc.nextLine().equalsIgnoreCase("s")) {
-                        System.out.print("Longitud: ");
+                        System.out.print("Longitud de la palabra: ");
                         juego.agregarPalabra(input, sc.nextLine());
                         System.out.println("¡Palabra guardada! Inténtalo de nuevo.");
                     }
@@ -114,9 +134,9 @@ public class BetweenleConsole {
                 String resultado = juego.procesarIntento(input);
 
                 if (resultado.equals("FUERA_DE_RANGO")) {
-                    System.out.println("Tu palabra debe estar alfabéticamente ENTRE los límites actuales.");
+                    System.out.println("¡ERROR! Tu palabra debe estar alfabéticamente ENTRE los límites actuales.");
                 } else if (resultado.equals("ERROR_LONGITUD")) {
-                    System.out.println("Tu palabra debe tener exactamente " + len + " letras.");
+                    System.out.println("¡ERROR! Tu palabra debe tener exactamente " + len + " letras.");
                 } else if (resultado.equals("GANASTE")) {
                     System.out.println("\n¡¡FELICIDADES!! Adivinaste la palabra exacta.");
                     break;
