@@ -37,12 +37,12 @@ public class BetweenleAPI {
                 // Separamos la línea usando el punto y coma como delimitador
                 String[] partes = linea.split(";");
 
-                // Verificamos que la línea tenga al menos la palabra y la definición
+                // Verificamos que la línea tenga al menos la palabra y la longitud
                 if (partes.length >= 2) {
                     String palabra = partes[0].trim().toLowerCase();
                     String longitud = partes[1].trim();
 
-                    // HashMap: La clave es la palabra, el valor es su definición real
+                    // HashMap: La clave es la palabra, el valor es su longitud
                     diccionario.put(palabra, longitud);
                 } else if (partes.length == 1) {
                     // Por si alguna línea viene rota y solo trae la palabra
@@ -54,9 +54,9 @@ public class BetweenleAPI {
         lector.close();
     }
 
-    // Te permite consultar la definición de cualquier palabra
-    public String obtenerDefinicion(String palabra) {
-        return diccionario.getOrDefault(palabra.toLowerCase(), "Definición no encontrada.");
+    // Te permite consultar la longitud de cualquier palabra
+    public String obtenerLongitud(String palabra) {
+        return diccionario.getOrDefault(palabra.toLowerCase(), "Longitud no encontrada.");
     }
 
     public void iniciarJuego(int longitud, int intentos) {
@@ -130,7 +130,8 @@ public class BetweenleAPI {
     }
 
     //conseguimos que recorra la palabra un porciento
-   public String darPistaTop1Porciento() {
+
+    public String darPistaTop1Porciento() {
         int idxSecreta = palabrasFiltradas.indexOf(palabraSecreta);
         int idxActual = (palabraTop == null) ? 0 : palabrasFiltradas.indexOf(palabraTop);
         int unoPorciento = Math.max(1, palabrasFiltradas.size() / 100);
@@ -162,8 +163,8 @@ public class BetweenleAPI {
 
     public boolean esValida(String p) {
         return diccionario.containsKey(p.toLowerCase()); }
-    public void agregarPalabra(String p, String d) {
-        diccionario.put(p.toLowerCase(), d); }
+    public void agregarPalabra(String p, String l) {
+        diccionario.put(p.toLowerCase(), l); }
     public int getIntentos() {
         return intentosRestantes; }
     public HashSet<Character> getLetrasUsadas() {
