@@ -7,6 +7,7 @@ public class BetweenleAPI {
     private HashMap<String, String> diccionario;
     private List<String> palabrasFiltradas;
     private HashSet<Character> letrasUsadas;
+    private List<String> historialPalabras;
     private String palabraSecreta;
     private String rutaActual;
     private String palabraTop;
@@ -16,16 +17,15 @@ public class BetweenleAPI {
     public BetweenleAPI() {
         this.diccionario = new HashMap<>();
         this.letrasUsadas = new HashSet<>();
+        this.historialPalabras = new ArrayList<>();
     }
 
-    // limpia acentos y poder comparar el abecedario matemáticamente
     private String quitarAcentos(String texto) {
         if (texto == null) return null;
         return Normalizer.normalize(texto, Normalizer.Form.NFD)
                 .replaceAll("\\p{M}", "");
     }
 
-    // carga el diccionario con formato "palabra; longitud"
     public void cargarDiccionario(String ruta) throws IOException {
         this.rutaActual = ruta;
         File archivo = new File(ruta);
@@ -33,35 +33,19 @@ public class BetweenleAPI {
 
         while (lector.hasNextLine()) {
             String linea = lector.nextLine().trim();
-
             if (!linea.isEmpty()) {
-                // Separamos la línea usando el punto y coma como delimitador
                 String[] partes = linea.split(";");
-
-                // Verificamos que la línea tenga al menos la palabra y la definición
                 if (partes.length >= 2) {
-                    String palabra = partes[0].trim().toLowerCase();
-                    String longitud = partes[1].trim();
-
-                    // HashMap: La clave es la palabra, el valor es su definición real
-                    diccionario.put(palabra, longitud);
+                    diccionario.put(partes[0].trim().toLowerCase(), partes[1].trim());
                 } else if (partes.length == 1) {
-                    // Por si alguna línea viene rota y solo trae la palabra
-                    String palabra = partes[0].trim().toLowerCase();
-                    diccionario.put(palabra, "longitud no disponible.");
+                    diccionario.put(partes[0].trim().toLowerCase(), "longitud no disponible.");
                 }
             }
         }
         lector.close();
     }
 
-    // Te permite consultar la definición de cualquier palabra
-    public String obtenerDefinicion(String palabra) {
-        return diccionario.getOrDefault(palabra.toLowerCase(), "Definición no encontrada.");
-    }
-
     public void iniciarJuego(int longitud, int intentos) {
-        // Filtramos por longitud y ordenamos ignorando los acentos
         palabrasFiltradas = diccionario.keySet().stream()
                 .filter(p -> p.length() == longitud)
                 .sorted((p1, p2) -> quitarAcentos(p1).compareTo(quitarAcentos(p2)))
@@ -72,16 +56,22 @@ public class BetweenleAPI {
         this.palabraSecreta = palabrasFiltradas.get(new Random().nextInt(palabrasFiltradas.size()));
         this.intentosRestantes = intentos;
         this.letrasUsadas.clear();
+        this.historialPalabras.clear();
 
-        // Los límites arrancan vacíos
-        this.palabraTop = null;
-        this.palabraBottom = null;
+        String extremoA = "";
+        String extremoZ = "";
+        for(int i = 0; i < longitud; i++) {
+            extremoA += "a";
+            extremoZ += "z";
+        }
+
+        this.palabraTop = extremoA;
+        this.palabraBottom = extremoZ;
     }
 
     public String procesarIntento(String intento) {
         intento = intento.toLowerCase();
 
-        // Validación de longitud
         if (intento.length() != palabraSecreta.length()) {
             return "ERROR_LONGITUD";
         }
@@ -91,25 +81,30 @@ public class BetweenleAPI {
         String bottomNorm = quitarAcentos(palabraBottom);
         String secretaNorm = quitarAcentos(palabraSecreta);
 
-        if (topNorm != null && intentoNorm.compareTo(topNorm) <= 0) return "FUERA_DE_RANGO";
-        if (bottomNorm != null && intentoNorm.compareTo(bottomNorm) >= 0) return "FUERA_DE_RANGO";
+        if (topNorm != null && intentoNorm.compareTo(topNorm) <= 0) return "FUERA_DE_RANGO_TOP";
+        if (bottomNorm != null && intentoNorm.compareTo(bottomNorm) >= 0) return "FUERA_DE_RANGO_BOTTOM";
 
         for (char c : intento.toCharArray()) letrasUsadas.add(c);
         intentosRestantes--;
 
-        if (intento.equals(palabraSecreta)) return "GANASTE";
+        if (intento.equals(palabraSecreta)) {
+            historialPalabras.add(intento);
+            return "GANASTE";
+        }
 
         if (intentoNorm.compareTo(secretaNorm) < 0) {
             palabraTop = intento;
+            historialPalabras.add(intento);
             return "La palabra secreta está DESPUÉS (Se mueve el límite superior)";
         } else {
             palabraBottom = intento;
+            historialPalabras.add(intento);
             return "La palabra secreta está ANTES (Se mueve el límite inferior)";
         }
     }
-
     public double getPorcentajeTop() {
-        if (palabraTop == null) return -1;
+        if (!esValida(palabraTop)) return -1;
+
         int total = palabrasFiltradas.size();
         int idxSecreta = palabrasFiltradas.indexOf(palabraSecreta);
         int idxTop = palabrasFiltradas.indexOf(palabraTop);
@@ -117,27 +112,25 @@ public class BetweenleAPI {
     }
 
     public double getPorcentajeBottom() {
-        if (palabraBottom == null) return -1;
+        if (!esValida(palabraBottom)) return -1;
+
         int total = palabrasFiltradas.size();
         int idxSecreta = palabrasFiltradas.indexOf(palabraSecreta);
         int idxBottom = palabrasFiltradas.indexOf(palabraBottom);
         return ((double) (idxBottom - idxSecreta) / total) * 100;
     }
 
-    // nos arroja el primer caracter de la palabra secreta
-
     public String obtenerPistaComienzo() {
         return "La palabra empieza con: " + palabraSecreta.charAt(0);
     }
 
-    //conseguimos que recorra la palabra un porciento
-
     public String darPistaTop1Porciento() {
         int idxSecreta = palabrasFiltradas.indexOf(palabraSecreta);
-        int idxActual = (palabraTop == null) ? 0 : palabrasFiltradas.indexOf(palabraTop);
+        int idxActual = palabrasFiltradas.indexOf(palabraTop);
+        if (idxActual == -1) idxActual = 0;
+
         int unoPorciento = Math.max(1, palabrasFiltradas.size() / 100);
 
-        // Validar si la distancia actual es menor o igual al 1%
         if ((idxSecreta - idxActual) <= unoPorciento) {
             return "La distancia al límite superior ya es del 1% o menor. Estás demasiado cerca.";
         }
@@ -149,10 +142,11 @@ public class BetweenleAPI {
 
     public String darPistaBottom1Porciento() {
         int idxSecreta = palabrasFiltradas.indexOf(palabraSecreta);
-        int idxActual = (palabraBottom == null) ? palabrasFiltradas.size() - 1 : palabrasFiltradas.indexOf(palabraBottom);
+        int idxActual = palabrasFiltradas.indexOf(palabraBottom);
+        if (idxActual == -1) idxActual = palabrasFiltradas.size() - 1;
+
         int unoPorciento = Math.max(1, palabrasFiltradas.size() / 100);
 
-        // Validar si la distancia actual es menor o igual al 1%
         if ((idxActual - idxSecreta) <= unoPorciento) {
             return "La distancia al límite inferior ya es del 1% o menor. Estás demasiado cerca.";
         }
@@ -161,10 +155,9 @@ public class BetweenleAPI {
         palabraBottom = palabrasFiltradas.get(nuevoIdx);
         return "El [Bottom Limit] se ha recorrido un 1% alfabéticamente a: " + palabraBottom.toUpperCase();
     }
-    //agregamos la palabra al diccionario
+
     public void agregarPalabra(String p, String l) {
         String palabraLimpia = p.toLowerCase();
-
         diccionario.put(palabraLimpia, l);
 
         if (palabrasFiltradas != null && palabraSecreta != null && palabraLimpia.length() == palabraSecreta.length()) {
@@ -205,4 +198,6 @@ public class BetweenleAPI {
         return palabraTop; }
     public String getPalabraBottom() {
         return palabraBottom; }
+    public List<String> getHistorialPalabras() {
+        return historialPalabras; }
 }
