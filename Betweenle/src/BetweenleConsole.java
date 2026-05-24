@@ -1,6 +1,6 @@
 import java.util.*;
 
-public class BetweenleConsole {
+public class BetweenleConsola {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         BetweenleAPI juego = new BetweenleAPI();
@@ -14,57 +14,47 @@ public class BetweenleConsole {
                 System.out.println("1) Español");
                 System.out.println("2) English");
 
-                if (sc.hasNextInt()) {
-                    idioma = sc.nextInt();
+                try {
+                    idioma = Integer.parseInt(sc.nextLine());
                     if (idioma != 1 && idioma != 2) {
-                        System.out.println("Opción no válida.\n");
+                        System.out.println("-> Opción no válida.\n");
                     }
-                } else {
-                    System.out.println("Por favor, introduce un número válido.\n");
-                    sc.next();
+                } catch (NumberFormatException e) {
+                    System.out.println("-> Por favor, introduce un número válido.\n");
                 }
             }
-            sc.nextLine();
 
             String rutaDiccionario = (idioma == 1) ? "palabrasSpanol.txt" : "palabrasIngles.txt";
-
             juego.cargarDiccionario(rutaDiccionario);
 
-            if (idioma == 1) {
-                System.out.println("¡Diccionario cargado automáticamente!\n");
-            }
+            System.out.println((idioma == 1) ? "¡Diccionario en espanol cargado!\n" : "Diccionario en ingles cargado\n");
             System.out.println("--- JUEGO BETWEENLE ---");
 
             int len = 0;
             while (len < 5 || len > 7) {
                 System.out.print("Dificultad (Elige 5, 6 o 7 letras): ");
-                if (sc.hasNextInt()) {
-                    len = sc.nextInt();
-                    if (len < 5 || len > 7) System.out.println("Opción no válida. Inténtalo de nuevo.");
-                } else {
-                    System.out.println("Por favor, introduce un número válido.");
-                    sc.next();
+                try {
+                    len = Integer.parseInt(sc.nextLine());
+                    if (len < 5 || len > 7) System.out.println("-> Opción no válida. Inténtalo de nuevo.");
+                } catch (NumberFormatException e) {
+                    System.out.println("-> Por favor, introduce un número válido.");
                 }
             }
 
             int tries = 0;
             while (tries != 10 && tries != 12 && tries != 14) {
                 System.out.print("Oportunidades (10, 12, 14): ");
-                if (sc.hasNextInt()) {
-                    tries = sc.nextInt();
+                try {
+                    tries = Integer.parseInt(sc.nextLine());
                     if (tries != 10 && tries != 12 && tries != 14) {
-                        System.out.println("Opción no válida. Por favor, elige 10, 12 o 14.");
+                        System.out.println("-> Opción no válida. Por favor, elige 10, 12 o 14.");
                     }
-                } else {
-                    System.out.println("Entrada no válida. Por favor, introduce un número (10, 12 o 14).");
-                    sc.next();
+                } catch (NumberFormatException e) {
+                    System.out.println("-> Entrada no válida. Por favor, introduce un número.");
                 }
             }
-            sc.nextLine();
 
             juego.iniciarJuego(len, tries);
-
-            // Variable para controlar si ya se usó la pista en esta partida
             boolean pistaUsada = false;
 
             while (juego.getIntentos() > 0) {
@@ -75,19 +65,21 @@ public class BetweenleConsole {
                 String pctBottom = (juego.getPorcentajeBottom() == -1) ? "?" : String.format("%.2f%%", juego.getPorcentajeBottom());
 
                 System.out.println("\n=============================================");
-                System.out.printf(" [Top Limit]   ↳  %s (Distancia: %s)\n", txtTop, pctTop);
+                System.out.printf(" [Limite Superior]   →  %s (Distancia: %s)\n", txtTop, pctTop);
                 System.out.println("      ??       [ Palabra Secreta Oculta ]");
-                System.out.printf(" [Bottom Limit]↳  %s (Distancia: %s)\n", txtBottom, pctBottom);
+                System.out.printf(" [Limite Inferior]   →  %s (Distancia: %s)\n", txtBottom, pctBottom);
                 System.out.println("=============================================");
 
                 System.out.println("Intentos restantes: " + juego.getIntentos());
-                System.out.println("Letras usadas: " + juego.getLetrasUsadas());
-                System.out.print("Tu palabra (o escribe 'pista'): ");
+
+                if (!juego.getHistorialPalabras().isEmpty()) {
+                    System.out.println("Palabras válidas jugadas: " + juego.getHistorialPalabras());
+                }
+
+                System.out.print("Tu palabra (o escribe '5' para ayuda :)) ): ");
                 String input = sc.nextLine().toLowerCase();
 
-                if (input.equals("pista") || input.equals("hint")) {
-
-                    // Verificamos si ya la usó antes de mostrar el menú
+                if (input.equals("5")) {
                     if (pistaUsada) {
                         System.out.println("-> ¡Ya utilizaste tu única pista en este juego!");
                         continue;
@@ -103,29 +95,34 @@ public class BetweenleConsole {
 
                     switch (opcionPista) {
                         case "a":
-                            if (juego.getPalabraTop() == null) {
-                                System.out.println("-> Aún no tienes un [Top Limit]. Ingresa palabras para crear un límite superior primero.");
+                            if (!juego.esValida(juego.getPalabraTop())) {
+                                System.out.println("-> ¡Error! Aún no tienes un [Top Limit] real. Ingresa palabras primero.");
                             } else {
                                 System.out.println("-> " + juego.darPistaTop1Porciento());
                                 pistaUsada = true;
                             }
                             break;
                         case "b":
-                            if (juego.getPalabraBottom() == null) {
-                                System.out.println("-> Aún no tienes un [Bottom Limit]. Ingresa palabras para crear un límite inferior primero.");
+                            if (!juego.esValida(juego.getPalabraBottom())) {
+                                System.out.println("-> ¡Error! Aún no tienes un [Bottom Limit] real. Ingresa palabras primero.");
                             } else {
                                 System.out.println("-> " + juego.darPistaBottom1Porciento());
-                                pistaUsada = true; 
+                                pistaUsada = true;
                             }
                             break;
                         case "c":
                             System.out.println("-> " + juego.obtenerPistaComienzo());
-                            pistaUsada = true; 
+                            pistaUsada = true;
                             break;
                         default:
                             System.out.println("-> Opción no válida. Menú de pistas cancelado.");
                             break;
                     }
+                    continue;
+                }
+
+                if (input.matches(".*\\d.*")) {
+                    System.out.println("-> No puedes ingresar números en tu palabra.");
                     continue;
                 }
 
@@ -141,8 +138,10 @@ public class BetweenleConsole {
 
                 String resultado = juego.procesarIntento(input);
 
-                if (resultado.equals("FUERA_DE_RANGO")) {
-                    System.out.println("¡ERROR! Tu palabra debe estar alfabéticamente ENTRE los límites actuales.");
+                if (resultado.equals("FUERA_DE_RANGO_TOP")) {
+                    System.out.println("¡ERROR! Tu palabra va ANTES del límite superior actual.");
+                } else if (resultado.equals("FUERA_DE_RANGO_BOTTOM")) {
+                    System.out.println("¡ERROR! Tu palabra va DESPUÉS del límite inferior actual.");
                 } else if (resultado.equals("ERROR_LONGITUD")) {
                     System.out.println("¡ERROR! Tu palabra debe tener exactamente " + len + " letras.");
                 } else if (resultado.equals("GANASTE")) {
@@ -165,8 +164,8 @@ public class BetweenleConsole {
             if (it.hasNext()) System.out.println("Primera letra registrada en el Set: " + it.next());
 
         } catch (Exception e) {
-            System.out.println("Error del sistema al cargar el diccionario: " + e.getMessage());
-            System.out.println("Asegúrate de que los archivos 'palabrasSpanol.txt' y 'palabrasIngles.txt' existan en la ruta correcta.");
+            System.out.println("Error al cargar el diccionario: " + e.getMessage());
+            System.out.println("Asegúrate de que los archivos de texto existan en la ruta correcta.");
         }
     }
 }
